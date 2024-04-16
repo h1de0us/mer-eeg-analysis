@@ -1,0 +1,9 @@
+torch
+mne
+mne-connectivity
+numpy
+networkx
+matplotlib
+nibabel
+ipywidgets
+ipykernel
