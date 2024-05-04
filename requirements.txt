@@ -1,9 +1,11 @@
 torch
 mne
 mne-connectivity
+pymatreader
 numpy
 networkx
 matplotlib
 nibabel
 ipywidgets
 ipykernel
+gudhi

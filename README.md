@@ -7,6 +7,8 @@ pip install -r requirements.txt
 ```
 If you get any problems related to the package ```mne-connectivity```, additionally run ```pip install -U mne-connectivity```
 
+WARNING: While working with connectivity in EEG data, create a separate virtual environment and install the dependencies there, as EEGRAPH currently uses outdated versions of numpy and mne-tools.
+
 TODO: how to train a model, how to extract features, how to build graphs based on eeg data
 
 ## Structure
