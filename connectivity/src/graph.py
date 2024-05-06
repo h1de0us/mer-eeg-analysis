@@ -44,8 +44,7 @@ class EEGConnectivityGraph:
         epochs = self.compute_epochs(window_size=window_size, overlap=overlap)
         print("Epochs shape:", epochs.get_data().shape)
 
-        con = spectral_connectivity_epochs(
-            # data=self.raw, 
+        con = spectral_connectivity_epochs( 
             data=epochs,
             method=method, 
             mode='multitaper', 
@@ -62,6 +61,7 @@ class EEGConnectivityGraph:
         # coherence_matrix_binary = coherence_matrix > threshold
         # return coherence_matrix_binary
 
+    # TODO: support not only fixed length epochs, but also epochs from events or sliding windows
     def compute_epochs(self, window_size=0.5, overlap=0.25):
         if self.epochs is None:
             self.epochs = make_fixed_length_epochs(raw=self.raw, duration=window_size, overlap=overlap)
