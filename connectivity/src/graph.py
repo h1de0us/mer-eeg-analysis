@@ -2,6 +2,7 @@ import numpy as np
 import mne
 import networkx as nx
 import matplotlib.pyplot as plt
+import pickle
 
 from typing import List, Tuple
 
@@ -10,12 +11,21 @@ from mne import make_fixed_length_epochs
 
 class EEGConnectivityGraph:
     def __init__(self, eeg_data_path):
-        self.raw = mne.io.read_raw_edf(eeg_data_path)
-        self.sfreq = self.raw.info['sfreq']
-        self.data = self.raw.get_data()
-        self.epochs = None
+        x = pickle.load(open(eeg_data_path, "rb"), encoding="latin1")
+        data = x["data"] # (n_trials, n_channels, n_samples)
+        self.data = data[:, :32, :] # select only the first 32 channels
+        n_trials, n_channels, n_samples = data.shape
+        self.labels = x["labels"]
+        self.sfreq = 128 # 128 Hz, via https://www.eecs.qmul.ac.uk/mmv/datasets/deap/readme.html
+        self.channels = ['Fp1', 'AF3', 'F3', 'F7', 'FC5', 
+                         'FC1', 'C3', 'T7', 'CP5', 'CP1', 
+                         'P3', 'P7', 'PO3', 'O1', 'Oz', 
+                         'Pz', 'Fp2', 'AF4', 'Fz', 'F4', 
+                         'F8', 'FC6', 'FC2', 'Cz', 'C4', 
+                         'T8', 'CP6', 'CP2', 'P4', 'P8', 
+                         'PO4', 'O2']
 
-        print("Data shape:", self.data.shape)
+        print("Data shape: (n_trials, n_channels, n_samples):", n_trials, n_channels, n_samples)
 
     def compute_connectivity(self, 
                              method : str | List[str]='correlation',
@@ -37,35 +47,21 @@ class EEGConnectivityGraph:
     def _compute_connectivity(self, 
                               fmin: float | Tuple[float] = 8,
                               fmax: float | Tuple[float] = 12, 
-                              method : str | List[str] = 'coh', 
-                              window_size: float = 0.5, 
-                              overlap: float = 0.25):
-        
-        epochs = self.compute_epochs(window_size=window_size, overlap=overlap)
-        print("Epochs shape:", epochs.get_data().shape)
+                              method : str | List[str] = 'coh',
+                              mode : str = 'fourier' 
+                              ):
 
         con = spectral_connectivity_epochs( 
-            data=epochs,
+            data=self.data,
             method=method, 
-            mode='multitaper', 
+            mode=mode,
             sfreq=self.sfreq,
             fmin=fmin, 
             fmax=fmax, 
             faverage=True, 
-            verbose=False
-        )
+            verbose=False)
 
-        return con # SpectralConnectivity
-
-        # coherence_matrix = con[:, :, 0]  # Use only the first frequency band
-        # coherence_matrix_binary = coherence_matrix > threshold
-        # return coherence_matrix_binary
-
-    # TODO: support not only fixed length epochs, but also epochs from events or sliding windows
-    def compute_epochs(self, window_size=0.5, overlap=0.25):
-        if self.epochs is None:
-            self.epochs = make_fixed_length_epochs(raw=self.raw, duration=window_size, overlap=overlap)
-        return self.epochs
+        return con # SpectralConnectivity object
 
     def create_graph(self, connectivity_matrix, title='EEG Functional Connectivity Network'):
         G = nx.from_numpy_array(connectivity_matrix)
