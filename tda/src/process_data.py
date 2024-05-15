@@ -16,7 +16,7 @@ def process_connectivity_matrix(mtx):
         distance_matrix = 1 - np.abs(mtx[:, :, band])
         rips_complex = gudhi.RipsComplex(distance_matrix=distance_matrix, max_edge_length=1.0)
         # calculate only zero- and first-order homologies
-        simplex_tree = rips_complex.create_simplex_tree(max_dimension=1)
+        simplex_tree = rips_complex.create_simplex_tree(max_dimension=2)
         persistence = simplex_tree.persistence()
         for entry in persistence[:-1]: # last entry is (0, inf) for each band for each participant
             order, (birth, death) = entry
