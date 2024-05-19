@@ -47,6 +47,7 @@ for participant in tqdm(participants):
         df = pd.concat([df, current_df])
 
 # statistics of the barcodes
+df.loc[np.isinf(df['death']), 'death'] = 1 # get rid of the infinities
 df['bars'] = df['death'] - df['birth']
 df['mean_bar'] = df.groupby(['participant', 'order', 'band'])['bars'].transform('mean')
 df['std_bar'] = df.groupby(['participant', 'order', 'band'])['bars'].transform('std')

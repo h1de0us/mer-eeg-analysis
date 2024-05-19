@@ -35,7 +35,7 @@ class MultiheadAttention(nn.Module):
                 x, 
                 spatial_embeddings=None,
                 edge_embeddings=None,
-                return_attention=False):
+                return_attention=True):
         """
         Args:
             x: torch.Tensor (B, L, D)
@@ -49,6 +49,8 @@ class MultiheadAttention(nn.Module):
 
         B is batch size, L is the length of sequence, D is the embedding dimension
         """
+        if len(x.shape) == 2:
+            x = x.unsqueeze(0) # add batch dimension for batch size 1
         B, L, D = x.shape
 
         q, k, v = self.q_proj(x), self.k_proj(x), self.v_proj(x)
@@ -66,10 +68,19 @@ class MultiheadAttention(nn.Module):
         softmax = nn.Softmax(dim=-1)
         softmax_input = torch.matmul(q / d, k.transpose(-2, -1)) # (B, num_heads, L, L)
 
+        # print(spatial_embeddings.shape, edge_embeddings.shape, softmax_input.shape, v.shape)
+
+        # spatial_embeddings.shape is (num_heads, L, L)
         if spatial_embeddings is not None:
+            # permuting to (L, L, num_heads)
+            spatial_embeddings = spatial_embeddings.permute(2, 0, 1)
+            spatial_embeddings = spatial_embeddings.unsqueeze(0).expand(B, -1, -1, -1)
+            # print("shapes for spatial", softmax_input.shape, spatial_embeddings.shape)
             softmax_input = softmax_input + spatial_embeddings
 
+        # edge_embeddings.shape is (num_heads, L, L)
         if edge_embeddings is not None:
+            edge_embeddings = edge_embeddings.unsqueeze(0)
             softmax_input = softmax_input + edge_embeddings
 
         attention = softmax(softmax_input)

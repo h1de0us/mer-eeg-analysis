@@ -29,7 +29,7 @@ for eeg_file in tqdm(eeg_files):
                                        duration=args.duration
                                        ) 
                                        for graph in graphs]
-    con_data_by_bands = [con.get_data(output="dense") for con in cons]
+    con_data_by_bands = [con.get_data(output="dense") for con in cons] # (n_channels, n_channels, n_bands)
 
     # save the connectivity data
     duration_str = str(args.duration)

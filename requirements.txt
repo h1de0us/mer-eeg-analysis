@@ -10,3 +10,5 @@ ipywidgets
 ipykernel
 gudhi
 dgl
+optuna
+seaborn
