@@ -72,6 +72,7 @@ class MultiheadAttention(nn.Module):
 
         # spatial_embeddings.shape is (num_heads, L, L)
         if spatial_embeddings is not None:
+            spatial_embeddings = spatial_embeddings.to(x.device)
             # permuting to (L, L, num_heads)
             spatial_embeddings = spatial_embeddings.permute(2, 0, 1)
             spatial_embeddings = spatial_embeddings.unsqueeze(0).expand(B, -1, -1, -1)
@@ -80,6 +81,7 @@ class MultiheadAttention(nn.Module):
 
         # edge_embeddings.shape is (num_heads, L, L)
         if edge_embeddings is not None:
+            edge_embeddings = edge_embeddings.to(x.device)
             edge_embeddings = edge_embeddings.unsqueeze(0)
             softmax_input = softmax_input + edge_embeddings
 

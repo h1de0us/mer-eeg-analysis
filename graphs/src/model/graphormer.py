@@ -54,12 +54,14 @@ class GraphormerModel(nn.Module):
                  embed_dim,
                  dim_feedforward, 
                  dropout=0.1,
+                 device='cpu',
                  batch_first=True,
                  norm_first=True):
         super().__init__()
         self.n_nodes = n_nodes
         self.n_heads = n_heads
         self.dim_feedforward = dim_feedforward
+        self.device = device
         # default node embeddings 
         self.node_encoder = nn.Embedding(n_nodes, embed_dim)
 
@@ -90,7 +92,7 @@ class GraphormerModel(nn.Module):
         outputs = []
         attentions = []
         for adj_matrix in batch['matrices']:
-            output, attention = self._forward(adj_matrix.numpy())
+            output, attention = self._forward(adj_matrix.cpu().numpy())
             outputs.append(output)
             attentions.append(attention)
         outputs = torch.stack(outputs)
@@ -99,9 +101,10 @@ class GraphormerModel(nn.Module):
 
     def _forward(self, adj_matrix):
         # creating dgl-graph from connectivity matrix
+
         nx_graph = nx.from_numpy_array(adj_matrix)
         nx_graph = nx_graph.to_directed()
-        g = dgl.from_networkx(nx_graph, edge_attrs=['weight'])
+        g = dgl.from_networkx(nx_graph, edge_attrs=['weight'], device=self.device)
 
         degrees = g.in_degrees()
 
@@ -117,10 +120,16 @@ class GraphormerModel(nn.Module):
         edge_encoding = self.compute_edge_encoding(g, edge_features) # (n_nodes, n_nodes, n_heads)
         edge_encoding = edge_encoding.permute(2, 0, 1) # (n_heads, n_nodes, n_nodes)
 
-        node_embeddings = self.node_encoder(torch.arange(self.n_nodes)) # (n_nodes, embed_dim)
+        node_embeddings = self.node_encoder(torch.arange(self.n_nodes, device=self.device)) # (n_nodes, embed_dim)
 
         # combine encodings
         input_embeddings = node_embeddings + centrality_encoding
+
+        # print all devices
+        # print("input_embeddings.device", input_embeddings.device)
+        # print("spatial_encoding.device", spatial_encoding.device)
+        # print("edge_encoding.device", edge_encoding.device)
+
 
         # Transformer Encoder
         attention_total = []
